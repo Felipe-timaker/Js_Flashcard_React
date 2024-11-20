@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards com React</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            height: 100vh;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 2rem;
+        }
+
+        .flashcards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        button.btn {
+            margin: 0.5rem 1rem; 
+        }
+
+        .flashcard {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            width: 220px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; 
+            height: 200px;
+        }
+
+        .flashcard button {
+            background-color: #e74c3c;
+            color: #fff;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem; 
+            margin-right: 1rem; 
+        }
+
+            .flashcard button:hover {
+                background-color: #2980b9;
+            }
+
+            .btn {
+                margin: 0.5rem 0;
+                padding: 0.7rem 1.5rem;
+                background-color: #3498db;
+                color: #fff;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 1rem;
+            }
+
+            .btn:hover {
+                background-color: #2980b9;
+            }
+
+        .stats {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .contador {
+            margin-bottom: 1rem;
+        }
+
+        .resultado-jogo {
+            text-align: center;
+        }
+
+        .botao-centralizado button {
+            margin: 0.5rem;
+        }
+
+        .form-container {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .form-container input {
+            width: 100%;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .form-container button {
+            background-color: #2ecc71;
+            color: #fff;
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .form-container button:hover {
+            background-color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/react/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone/babel.min.js"></script>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function App() {
+            const [flashcards, setFlashcards] = useState(() => {
+                const saved = localStorage.getItem("flashcards");
+                return saved ? JSON.parse(saved) : [];
+            });
+            const [currentCardIndex, setCurrentCardIndex] = useState(0);
+            const [isGameStarted, setIsGameStarted] = useState(false);
+            const [showForm, setShowForm] = useState(false);
+            const [timer, setTimer] = useState(0);
+            const [isTimerRunning, setIsTimerRunning] = useState(false);
+
+            useEffect(() => {
+                localStorage.setItem("flashcards", JSON.stringify(flashcards));
+            }, [flashcards]);
+
+            useEffect(() => {
+                let interval;
+                if (isTimerRunning) {
+                    interval = setInterval(() => {
+                        setTimer((prev) => prev + 1);
+                    }, 1000);
+                } else {
+                    clearInterval(interval);
+                }
+                return () => clearInterval(interval);
+            }, [isTimerRunning]);
+
+            const handleAddCard = (pergunta, resposta) => {
+                setFlashcards([...flashcards, { pergunta, resposta, acertos: 0, erros: 0 }]);
+                setShowForm(false);
+            };
+
+            const handleStartGame = () => {
+                setFlashcards(flashcards.sort(() => Math.random() - 0.5));
+                setIsGameStarted(true);
+                setIsTimerRunning(true);
+                setCurrentCardIndex(0);
+            };
+
+            const handleEndGame = () => {
+                setIsGameStarted(false);
+                setIsTimerRunning(false);
+                alert(`Jogo finalizado! Tempo total: ${Math.floor(timer / 60)}:${timer % 60}`);
+            };
+
+            const handleMarkResult = (isCorrect) => {
+                const updatedFlashcards = [...flashcards];
+                if (isCorrect) updatedFlashcards[currentCardIndex].acertos += 1;
+                else updatedFlashcards[currentCardIndex].erros += 1;
+                setFlashcards(updatedFlashcards);
+                setCurrentCardIndex((prev) => prev + 1);
+            };
+
+            const handleDeleteCard = (index) => {
+                const updatedFlashcards = flashcards.filter((_, i) => i !== index);
+                setFlashcards(updatedFlashcards);
+            };
+
+            return (
+                <div>
+                    <h1>Flashcards com React</h1>
+                    {!isGameStarted && (
+                        <div>
+                            <button className="btn" onClick={() => setShowForm(true)}>Adicionar Flashcard</button>
+                            <button className="btn" onClick={handleStartGame}>Iniciar Jogo</button>
+                        </div>
+                    )}
+                    {showForm && <AddCardForm onAddCard={handleAddCard} />}
+                    {isGameStarted && (
+                        <Game
+                            flashcards={flashcards}
+                            currentCardIndex={currentCardIndex}
+                            onMarkResult={handleMarkResult}
+                            onEndGame={handleEndGame}
+                            timer={timer}
+                        />
+                    )}
+                    {!isGameStarted && <FlashcardList flashcards={flashcards} onDeleteCard={handleDeleteCard} />}
+                </div>
+            );
+        }
+
+        function AddCardForm({ onAddCard }) {
+            const [pergunta, setPergunta] = useState("");
+            const [resposta, setResposta] = useState("");
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (pergunta && resposta) {
+                    onAddCard(pergunta, resposta);
+                    setPergunta("");
+                    setResposta("");
+                } else {
+                    alert("Preencha todos os campos!");
+                }
+            };
+
+            return (
+                <div className="form-container">
+                    <h2>Adicionar Flashcard</h2>
+                    <form onSubmit={handleSubmit}>
+                        <input
+                            type="text"
+                            placeholder="Pergunta"
+                            value={pergunta}
+                            onChange={(e) => setPergunta(e.target.value)}
+                        />
+                        <input
+                            type="text"
+                            placeholder="Resposta"
+                            value={resposta}
+                            onChange={(e) => setResposta(e.target.value)}
+                        />
+                        <button type="submit">Salvar</button>
+                    </form>
+                </div>
+            );
+        }
+
+        function FlashcardList({ flashcards, onDeleteCard }) {
+            return (
+                <div className="flashcards">
+                    {flashcards.map((card, index) => (
+                        <div key={index} className="flashcard">
+                            <p><strong>Pergunta:</strong> {card.pergunta}</p>
+                            <p><strong>Resposta:</strong> {card.resposta}</p>
+                            <p>Acertos: {card.acertos}</p>
+                            <p>Erros: {card.erros}</p>
+                            <button onClick={() => onDeleteCard(index)}>Excluir</button>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        function Game({ flashcards, currentCardIndex, onMarkResult, onEndGame, timer }) {
+            if (currentCardIndex >= flashcards.length) {
+                onEndGame();
+                return null;
+            }
+
+            const card = flashcards[currentCardIndex];
+            return (
+                <div>
+                    <div className="contador">Cartão {currentCardIndex + 1} de {flashcards.length}</div>
+                    <div className="flashcard">
+                        <p><strong>Pergunta:</strong> {card.pergunta}</p>
+                        <button onClick={() => onMarkResult(true)}>Acertou</button>
+                        <button onClick={() => onMarkResult(false)}>Errou</button>
+                    </div>
+                    <div>Tempo: {Math.floor(timer / 60)}:{timer % 60}</div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById("root"));
+    </script>
+</body>
+</html>
